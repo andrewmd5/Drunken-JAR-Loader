@@ -7,15 +7,9 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Frame;
-import java.awt.KeyboardFocusManager;
 import java.awt.LayoutManager;
-import java.awt.Point;
-import java.awt.Rectangle;
-import java.awt.Robot;
-import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -24,7 +18,6 @@ import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.logging.Logger;
 
-import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
@@ -145,35 +138,6 @@ public class Loader extends JWindow implements ActionListener {
 
 	}
 
-	private static void openURL(final String url) { // Because the default Java
-													// url opener sucks
-		final String osName = System.getProperty("os.name");
-		try {
-			if (osName.startsWith("Windows")) {
-				Runtime.getRuntime().exec(
-						"rundll32 url.dll,FileProtocolHandler " + url);
-			} else {
-				final String[] browsers = { "firefox", "opera", "konqueror",
-						"epiphany", "mozilla", "netscape", "chrome", "safari" };
-				String browser = null;
-				for (int count = 0; (count < browsers.length)
-						&& (browser == null); count++) {
-					if (Runtime.getRuntime()
-							.exec(new String[] { "which", browsers[count] })
-							.waitFor() == 0) {
-						browser = browsers[count];
-					}
-				}
-				Runtime.getRuntime().exec(new String[] { browser, url });
-			}
-		} catch (final Exception e) {
-			logger.info("Could not open browser");
-			logger.severe("Encounter error: " + e.getClass());
-			logger.severe("Error message: " + e.getMessage());
-			logger.severe("Error cause: " + e.getCause());
-		}
-	}
-
 	private static void setFrameTheme() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
 			UnsupportedLookAndFeelException
@@ -223,9 +187,6 @@ public class Loader extends JWindow implements ActionListener {
 	private final JPanel clientPanel = new JPanel();
 	private LayoutManager Layout;
 
-	private int screenshot;
-	private boolean takeScreenshot = true;
-
 	public JPanel totalPanel;
 
 	@Override
@@ -233,17 +194,17 @@ public class Loader extends JWindow implements ActionListener {
 		final String s = actionevent.getActionCommand();
 
 		if (s.equals("Vote")) {
-			openURL("http://codeusa.net/vote/");
+			LoaderUtils.openURL("http://codeusa.net/vote/");
 		} else if (s.equals("Hiscores")) {
-			openURL("http://codeusa.net/hiscores");
+			LoaderUtils.openURL("http://codeusa.net/hiscores");
 		} else if (s.equals("Forum")) {
-			openURL("http://codeusa.net/forums");
+			LoaderUtils.openURL("http://codeusa.net/forums");
 		} else
 
 		if (s.equals("Store")) {
-			openURL("http://codeusa.net/store");
+			LoaderUtils.openURL("http://codeusa.net/store");
 		} else if (s.equals("Screenshot")) {
-			takeScreenShot();
+			LoaderUtils.takeScreenShot();
 		}
 	}
 
@@ -295,46 +256,4 @@ public class Loader extends JWindow implements ActionListener {
 		setFrameTheme();
 	}
 
-	public void takeScreenShot() {
-		try {
-			final Window window = KeyboardFocusManager
-					.getCurrentKeyboardFocusManager().getFocusedWindow();
-			final Point point = window.getLocationOnScreen();
-			final int x = (int) point.getX();
-			final int y = (int) point.getY();
-			final int w = window.getWidth();
-			final int h = window.getHeight();
-			final Robot robot = new Robot(window.getGraphicsConfiguration()
-					.getDevice());
-			final Rectangle captureSize = new Rectangle(x, y, w, h);
-			final java.awt.image.BufferedImage bufferedimage = robot
-					.createScreenCapture(captureSize);
-			final String fileExtension = "CodeUSA";
-			for (int i = 1; i <= 1000; i++) {
-				final File screenShots = new File("Screenshots/"
-						+ fileExtension + " " + i + ".png");
-				if (!screenShots.exists()) {
-					screenshot = i;
-					takeScreenshot = true;
-					break;
-				}
-			}
-			final File directory = new File("./ScreenShots/");
-			final File screenShot = new File((new StringBuilder())
-					.append("./Screenshots/" + fileExtension + " ")
-					.append(screenshot).append(".png").toString());
-			if (!directory.exists()) {
-				directory.mkdir();
-			}
-			if (takeScreenshot == true) {
-				ImageIO.write(bufferedimage, "png", screenShot);
-			} else {
-				logger.info("Unable to write file");
-			}
-		} catch (final Exception e) {
-			logger.severe("Encounter error: " + e.getClass());
-			logger.severe("Error message: " + e.getMessage());
-			logger.severe("Error cause: " + e.getCause());
-		}
-	}
 }
