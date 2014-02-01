@@ -337,5 +337,4 @@ public class Loader extends JWindow implements ActionListener {
 			logger.severe("Error cause: " + e.getCause());
 		}
 	}
-
 }
