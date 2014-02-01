@@ -5,27 +5,27 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.Image;
+import java.awt.Font;
+import java.awt.Frame;
 import java.awt.KeyboardFocusManager;
 import java.awt.LayoutManager;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.Robot;
-import java.awt.Toolkit;
 import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
-import java.util.Random;
 import java.util.logging.Logger;
 
 import javax.imageio.ImageIO;
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JDialog;
@@ -33,44 +33,73 @@ import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JMenuBar;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JWindow;
+import javax.swing.SwingConstants;
+import javax.swing.SwingWorker;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
 
 public class Loader extends JWindow implements ActionListener {
 	private static URLClassLoader classLoader;
-	private final static String JAR_URL = "http://codeusa.net/play/client.jar";
-	private final static String LOADER_IMAGE = "http://codeusa.net/images/logo.png";
+	private static int downloaded; // number of bytes downloaded
+	// to
+	// splash
+	// image
+	private final static String FRAME_IMAGE = "http://i.imgur.com/UW5ZfQ5.jpg"; // icon
+																				// for
+																				// the
+																				// frame
+	private final static String JAR_URL = "http://codeusa.net/play/client.jar"; // link
+	// to
+	// jar
+	final static Loader loader = new Loader();
+	private final static String LOADER_IMAGE = "http://codeusa.net/images/logo.png"; // link
 	private final static Logger logger = Logger.getLogger(Loader.class
 			.getName());
-	private static String MAIN_CLASS = "RunClient";
+	private static String MAIN_CLASS = "RunClient"; // put your jars main class
+													// here
+	private static JProgressBar progressBar;
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -1162207878136245145L;
+	private static int size; // size of download in bytes
+	private static JDialog splash;
 
-	public static String createString(final Random random, final String s,
-			final int i) {
-		final char ac[] = new char[i];
-		for (int j = 0; j < i; j++) {
-			ac[j] = s.charAt(random.nextInt(s.length()));
-		}
-
-		return new String(ac);
+	public static float getProgress() {
+		return ((float) downloaded / size) * 100;
 	}
 
-	public static void main(final String... args)
-			throws InstantiationException, IllegalAccessException,
-			ClassNotFoundException, IOException,
+	private static void grabJAR() throws ClassNotFoundException,
+			InstantiationException, IllegalAccessException, IOException,
 			UnsupportedLookAndFeelException {
-		final Loader loader = new Loader();
-		if (!new File(loader.IMAGE_LOCATION).exists()) {
-			loader.saveImage(Loader.LOADER_IMAGE, loader.IMAGE_LOCATION);
-		}
-		loader.showSplash(false);
-		logger.info("Starting to download the client from " + Loader.JAR_URL
-				+ ".");
 		final URL url = new URL(Loader.JAR_URL);
+		final InputStream is = url.openStream();
+		final byte[] b = new byte[2048];
+		int length;
+		final HttpURLConnection connection = (HttpURLConnection) url
+				.openConnection();
+
+		// Specify what portion of file to download.
+		connection.setRequestProperty("Range", "bytes=" + downloaded + "-");
+
+		// Connect to server.
+		connection.connect();
+
+		// Make sure response code is in the 200 range.
+		if (connection.getResponseCode() / 100 != 2) {
+			logger.info("Unable to find file");
+			return;
+		}
+
+		// set content length.
+		size = connection.getContentLength();
+		while ((length = is.read(b)) != -1) {
+			downloaded += length;
+			progressBar.setValue((int) getProgress()); // set progress bar
+		}
+		is.close();
 		classLoader = new URLClassLoader(new URL[] { (url) });
 		final Applet client = (Applet) classLoader.loadClass(MAIN_CLASS)
 				.newInstance();
@@ -78,6 +107,41 @@ public class Loader extends JWindow implements ActionListener {
 		client.start();
 		loader.loadClient(client);
 		setFrameTheme();
+
+	}
+
+	protected static void hideSplashScreen() {
+		splash.setVisible(false);
+		splash.dispose();
+	}
+
+	public static void main(final String... args)
+			throws InstantiationException, IllegalAccessException,
+			ClassNotFoundException, IOException,
+			UnsupportedLookAndFeelException {
+		try {
+			showSplashScreen();
+		} catch (final MalformedURLException e) {
+			logger.severe("Encounter error: " + e.getClass());
+			logger.severe("Error message: " + e.getMessage());
+			logger.severe("Error cause: " + e.getCause());
+		}
+		final SwingWorker<Void, Integer> worker = new SwingWorker<Void, Integer>() {
+
+			@Override
+			protected Void doInBackground() throws Exception {
+				grabJAR();
+				return null;
+			}
+
+			@Override
+			protected void done() {
+
+				hideSplashScreen();
+			}
+
+		};
+		worker.execute();
 
 	}
 
@@ -123,6 +187,29 @@ public class Loader extends JWindow implements ActionListener {
 		}
 	}
 
+	protected static void showSplashScreen() throws MalformedURLException {
+		splash = new JDialog((Frame) null);
+		splash.setModal(false);
+		splash.setAlwaysOnTop(true);
+		splash.setUndecorated(true);
+		final JLabel background = new JLabel(new ImageIcon(
+				new URL(LOADER_IMAGE)));
+		background.setOpaque(true);
+		background.setLayout(new BorderLayout());
+		splash.getContentPane().add(background);
+		final JLabel text = new JLabel("Loading, please wait...");
+		text.setFont(new Font("Consolas", Font.BOLD | Font.ITALIC, 15));
+		text.setHorizontalAlignment(SwingConstants.CENTER);
+		text.setForeground(Color.WHITE);
+		text.setBorder(BorderFactory.createEmptyBorder(100, 50, 100, 50));
+		background.add(text);
+		progressBar = new JProgressBar();
+		background.add(progressBar, BorderLayout.SOUTH);
+		splash.pack();
+		splash.setLocationRelativeTo(null);
+		splash.setVisible(true);
+	}
+
 	private JButton Button1;
 
 	private JButton Button2;
@@ -131,22 +218,14 @@ public class Loader extends JWindow implements ActionListener {
 	private JButton Button6;
 
 	private JFrame clientFrame;
+
 	private final JPanel clientPanel = new JPanel();
-
-	private final String IMAGE_LOCATION = "" + System.getProperty("user.home")
-			+ "/codeusasplash.png";
-
 	private LayoutManager Layout;
+
 	private int screenshot;
-
-	private final int splashDuration = 5000;
-
 	private boolean takeScreenshot = true;
+
 	public JPanel totalPanel;
-
-	public Loader() {
-
-	}
 
 	@Override
 	public void actionPerformed(final ActionEvent actionevent) {
@@ -171,7 +250,9 @@ public class Loader extends JWindow implements ActionListener {
 			InstantiationException, IllegalAccessException, IOException,
 			UnsupportedLookAndFeelException {
 		clientFrame = new JFrame("CodeUSA Loader");
-		clientFrame.setLayout(new BorderLayout());
+		clientFrame
+				.setIconImage(new ImageIcon(new URL(FRAME_IMAGE)).getImage());
+		clientFrame.getContentPane().setLayout(new BorderLayout());
 		clientPanel.setLayout(new BorderLayout());
 		clientPanel.add(client);
 		clientPanel.setPreferredSize(new Dimension(765, 503));
@@ -211,56 +292,6 @@ public class Loader extends JWindow implements ActionListener {
 		Button1.setForeground(Color.ORANGE);
 		Button1.setText("Screenshot");
 		setFrameTheme();
-	}
-
-	/**
-	 * Saves an image from a remote URL to the destination you specify.
-	 * 
-	 * @param imageUrl
-	 * @param destinationFile
-	 * @throws IOException
-	 */
-	private void saveImage(final String imageUrl, final String destinationFile)
-			throws IOException {
-		logger.info("Downloading image from " + imageUrl + " and saving to "
-				+ destinationFile);
-		final URL url = new URL(imageUrl);
-		final InputStream is = url.openStream();
-		final OutputStream os = new FileOutputStream(destinationFile);
-		final byte[] b = new byte[2048];
-		int length;
-		while ((length = is.read(b)) != -1) {
-			os.write(b, 0, length);
-		}
-		is.close();
-		os.close();
-	}
-
-	public void showSplash(final boolean hideAfterDuration) {
-		final JPanel content = (JPanel) getContentPane();
-		final Image img = new ImageIcon(IMAGE_LOCATION).getImage();
-		logger.info("Showing splash from " + IMAGE_LOCATION);
-		final int width = img.getWidth(null);
-		final int height = img.getHeight(null);
-		final Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-		final int x = (screen.width - width) / 2;
-		final int y = (screen.height - height) / 2;
-		setBounds(x, y, width, height);
-		final JLabel label = new JLabel(new ImageIcon(IMAGE_LOCATION));
-		content.setOpaque(false);
-		label.setOpaque(false);
-		content.add(label, BorderLayout.CENTER);
-		setVisible(true);
-		if (hideAfterDuration) {
-			try {
-				Thread.sleep(splashDuration);
-			} catch (final Exception e) {
-				logger.severe("Encounter error: " + e.getClass());
-				logger.severe("Error message: " + e.getMessage());
-				logger.severe("Error cause: " + e.getCause());
-			}
-			setVisible(false);
-		}
 	}
 
 	public void takeScreenShot() {
