@@ -54,11 +54,10 @@ public class Loader extends JWindow implements ActionListener {
 	// to
 	// jar
 	final static Loader loader = new Loader();
-	private final static String LOADER_IMAGE = "http://codeusa.net/images/logo.png"; // link
 	private final static Logger logger = Logger.getLogger(Loader.class
 			.getName());
 	private static String MAIN_CLASS = "RunClient"; // put your jars main class
-													// here
+	// here
 	private static JProgressBar progressBar;
 	/**
 	 * 
@@ -66,8 +65,9 @@ public class Loader extends JWindow implements ActionListener {
 	private static final long serialVersionUID = -1162207878136245145L;
 	private static int size; // size of download in bytes
 	private static JDialog splash;
+	private final static String SPLASH_IMAGE = "http://i.imgur.com/wPH1YJb.png"; // link
 
-	public static float getProgress() {
+	private static float getProgress() {
 		return ((float) downloaded / size) * 100;
 	}
 
@@ -88,7 +88,7 @@ public class Loader extends JWindow implements ActionListener {
 		connection.connect();
 
 		// Make sure response code is in the 200 range.
-		if (connection.getResponseCode() / 100 != 2) {
+		if ((connection.getResponseCode() / 100) != 2) {
 			logger.info("Unable to find file");
 			return;
 		}
@@ -145,7 +145,7 @@ public class Loader extends JWindow implements ActionListener {
 
 	}
 
-	public static void openURL(final String url) { // Because the default Java
+	private static void openURL(final String url) { // Because the default Java
 													// url opener sucks
 		final String osName = System.getProperty("os.name");
 		try {
@@ -156,7 +156,8 @@ public class Loader extends JWindow implements ActionListener {
 				final String[] browsers = { "firefox", "opera", "konqueror",
 						"epiphany", "mozilla", "netscape", "chrome", "safari" };
 				String browser = null;
-				for (int count = 0; count < browsers.length && browser == null; count++) {
+				for (int count = 0; (count < browsers.length)
+						&& (browser == null); count++) {
 					if (Runtime.getRuntime()
 							.exec(new String[] { "which", browsers[count] })
 							.waitFor() == 0) {
@@ -173,7 +174,7 @@ public class Loader extends JWindow implements ActionListener {
 		}
 	}
 
-	public static void setFrameTheme() throws ClassNotFoundException,
+	private static void setFrameTheme() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
 			UnsupportedLookAndFeelException
 
@@ -193,7 +194,7 @@ public class Loader extends JWindow implements ActionListener {
 		splash.setAlwaysOnTop(true);
 		splash.setUndecorated(true);
 		final JLabel background = new JLabel(new ImageIcon(
-				new URL(LOADER_IMAGE)));
+				new URL(SPLASH_IMAGE)));
 		background.setOpaque(true);
 		background.setLayout(new BorderLayout());
 		splash.getContentPane().add(background);
@@ -310,23 +311,23 @@ public class Loader extends JWindow implements ActionListener {
 					.createScreenCapture(captureSize);
 			final String fileExtension = "CodeUSA";
 			for (int i = 1; i <= 1000; i++) {
-				final File file = new File("Screenshots/" + fileExtension + " "
-						+ i + ".png");
-				if (!file.exists()) {
+				final File screenShots = new File("Screenshots/"
+						+ fileExtension + " " + i + ".png");
+				if (!screenShots.exists()) {
 					screenshot = i;
 					takeScreenshot = true;
 					break;
 				}
 			}
-			final File file2 = new File("./ScreenShots/");
-			final File file = new File((new StringBuilder())
+			final File directory = new File("./ScreenShots/");
+			final File screenShot = new File((new StringBuilder())
 					.append("./Screenshots/" + fileExtension + " ")
 					.append(screenshot).append(".png").toString());
-			if (!file2.exists()) {
-				file2.mkdir();
+			if (!directory.exists()) {
+				directory.mkdir();
 			}
 			if (takeScreenshot == true) {
-				ImageIO.write(bufferedimage, "png", file);
+				ImageIO.write(bufferedimage, "png", screenShot);
 			} else {
 				logger.info("Unable to write file");
 			}
