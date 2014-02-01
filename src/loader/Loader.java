@@ -36,28 +36,29 @@ import javax.swing.UnsupportedLookAndFeelException;
 public class Loader extends JWindow implements ActionListener {
 	private static URLClassLoader classLoader;
 	private static int downloaded; // number of bytes downloaded
-	// to
-	// splash
-	// image
-	private final static String FRAME_IMAGE = "http://i.imgur.com/UW5ZfQ5.jpg"; // icon
-																				// for
-																				// the
-																				// frame
-	private final static String JAR_URL = "http://codeusa.net/play/client.jar"; // link
-	// to
-	// jar
+
+	private final static String FRAME_IMAGE = "http://i.imgur.com/UW5ZfQ5.jpg";
+
+	private final static String JAR_URL = "http://codeusa.net/play/client.jar";
+
 	final static Loader loader = new Loader();
+
 	private final static Logger logger = Logger.getLogger(Loader.class
 			.getName());
-	private static String MAIN_CLASS = "RunClient"; // put your jars main class
-	// here
+
+	private static String MAIN_CLASS = "RunClient";
+
 	private static JProgressBar progressBar;
+
 	/**
 	 * 
 	 */
 	private static final long serialVersionUID = -1162207878136245145L;
+
 	private static int size; // size of download in bytes
+
 	private static JDialog splash;
+
 	private final static String SPLASH_IMAGE = "http://i.imgur.com/wPH1YJb.png"; // link
 
 	private static float getProgress() {
@@ -98,7 +99,7 @@ public class Loader extends JWindow implements ActionListener {
 				.newInstance();
 		client.init();
 		client.start();
-		loader.loadClient(client);
+		loader.openJARFrame(client);
 		setFrameTheme();
 
 	}
@@ -140,9 +141,7 @@ public class Loader extends JWindow implements ActionListener {
 
 	private static void setFrameTheme() throws ClassNotFoundException,
 			InstantiationException, IllegalAccessException,
-			UnsupportedLookAndFeelException
-
-	{
+			UnsupportedLookAndFeelException {
 		try {
 			UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
 		} catch (final Exception e) {
@@ -175,43 +174,42 @@ public class Loader extends JWindow implements ActionListener {
 		splash.setVisible(true);
 	}
 
-	private JButton Button1;
-
-	private JButton Button2;
-
-	private JButton Button3;
-	private JButton Button6;
-
 	private JFrame clientFrame;
 
 	private final JPanel clientPanel = new JPanel();
+
 	private LayoutManager Layout;
+
+	private final JButton onlineStoreButton = new JButton("Upgrades");
+	private final JButton screenShotButton = new JButton("Screenshot");
 
 	public JPanel totalPanel;
 
 	@Override
 	public void actionPerformed(final ActionEvent actionevent) {
-		final String s = actionevent.getActionCommand();
-
-		if (s.equals("Vote")) {
-			LoaderUtils.openURL("http://codeusa.net/vote/");
-		} else if (s.equals("Hiscores")) {
-			LoaderUtils.openURL("http://codeusa.net/hiscores");
-		} else if (s.equals("Forum")) {
-			LoaderUtils.openURL("http://codeusa.net/forums");
-		} else
-
-		if (s.equals("Store")) {
+		final String button = actionevent.getActionCommand();
+		switch (button) {
+		case "Upgrades":
 			LoaderUtils.openURL("http://codeusa.net/store");
-		} else if (s.equals("Screenshot")) {
+			break;
+		case "Screenshot":
 			LoaderUtils.takeScreenShot();
+			break;
+		default:
+			logger.info("This isn't a button I know of " + button);
+			break;
+
 		}
+
 	}
 
-	private void loadClient(final Applet client) throws ClassNotFoundException,
-			InstantiationException, IllegalAccessException, IOException,
+	private void openJARFrame(final Applet client)
+			throws ClassNotFoundException, InstantiationException,
+			IllegalAccessException, IOException,
 			UnsupportedLookAndFeelException {
+
 		clientFrame = new JFrame("CodeUSA Loader");
+
 		clientFrame
 				.setIconImage(new ImageIcon(new URL(FRAME_IMAGE)).getImage());
 		clientFrame.getContentPane().setLayout(new BorderLayout());
@@ -228,32 +226,15 @@ public class Loader extends JWindow implements ActionListener {
 		Layout = new FlowLayout();
 		JFrame.setDefaultLookAndFeelDecorated(true);
 		JDialog.setDefaultLookAndFeelDecorated(true);
-		Button1 = new JButton("Screenshot");
-		Button2 = new JButton("Vote");
-		Button3 = new JButton("Forum");
-		Button6 = new JButton("Upgrades");
 		jmenubar.setLayout(Layout);
-		jmenubar.add(Button2);
-		jmenubar.add(Button3);
-		jmenubar.add(Button6);
-		jmenubar.add(Button1);
-		Button2.addActionListener(this);
-		Button3.addActionListener(this);
-		Button6.addActionListener(this);
-		Button1.addActionListener(this);
-		Button2.setBackground(Color.BLACK);
-		Button2.setForeground(Color.ORANGE);
-		Button2.setText("Forum");
-		Button3.setBackground(Color.BLACK);
-		Button3.setForeground(Color.ORANGE);
-		Button3.setText("Vote");
-		Button6.setBackground(Color.BLACK);
-		Button6.setForeground(Color.ORANGE);
-		Button6.setText("Upgrades");
-		Button1.setBackground(Color.BLACK);
-		Button1.setForeground(Color.ORANGE);
-		Button1.setText("Screenshot");
+		jmenubar.add(onlineStoreButton);
+		jmenubar.add(screenShotButton);
+		onlineStoreButton.addActionListener(this);
+		screenShotButton.addActionListener(this);
+		onlineStoreButton.setText("Upgrades");
+		screenShotButton.setText("Screenshot");
 		setFrameTheme();
+		clientFrame.setLocationRelativeTo(null);
 	}
 
 }
